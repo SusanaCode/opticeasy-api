@@ -13,9 +13,10 @@ import {
 export async function listarUsuarios(req, res) {
   try {
     const rows = await daoListarUsuarios();
-    res.json(rows);
+    return res.json(rows);
   } catch (err) {
-    res.status(500).json({ message: "Error listando usuarios", error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: "Error listando usuarios" });
   }
 }
 
@@ -23,11 +24,17 @@ export async function listarUsuarios(req, res) {
 export async function obtenerUsuarioPorId(req, res) {
   try {
     const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: "ID usuario inválido" });
+    }
+
     const row = await daoObtenerUsuarioPorId(id);
-    if (!row) return res.status(404).json({ message: "Usuario no encontrado" });
-    res.json(row);
+    if (!row) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    return res.json(row);
   } catch (err) {
-    res.status(500).json({ message: "Error obteniendo usuario", error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: "Error obteniendo usuario" });
   }
 }
 
@@ -44,11 +51,24 @@ export async function crearUsuario(req, res) {
       codigo_centro,
       rol,
       activo = 1
-    } = req.body;
+    } = req.body ?? {};
 
-    // Validación mínima
-    if (!nombre_usuario || !apellidos_usuario || !nick_usuario || !email || !password || !codigo_centro || !rol) {
-      return res.status(400).json({ message: "Faltan campos obligatorios" });
+    if (
+      !nombre_usuario ||
+      !apellidos_usuario ||
+      !nick_usuario ||
+      !email ||
+      !password ||
+      !codigo_centro ||
+      !rol
+    ) {
+      return res.status(400).json({ error: "Faltan campos obligatorios" });
+    }
+
+    if (typeof password !== "string" || password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "password inválida (mínimo 6 caracteres)" });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
@@ -66,10 +86,22 @@ export async function crearUsuario(req, res) {
     });
 
     const created = await daoObtenerUsuarioPorId(insertId);
-    res.status(201).json(created);
+
+    // Si tu DAO devuelve password_hash, lo quitamos por seguridad
+    if (created && created.password_hash !== undefined) {
+      const { password_hash: _, ...safe } = created;
+      return res.status(201).json(safe);
+    }
+
+    return res.status(201).json(created);
   } catch (err) {
-    // Aquí caerán típicos ER_DUP_ENTRY por nick/email/colegiado únicos
-    res.status(500).json({ message: "Error creando usuario", error: err.message });
+    // típicos ER_DUP_ENTRY por nick/email/colegiado únicos
+    if (err?.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ error: "Nick/email/colegiado ya existe" });
+    }
+
+    console.error(err);
+    return res.status(500).json({ error: "Error creando usuario" });
   }
 }
 
@@ -77,14 +109,28 @@ export async function crearUsuario(req, res) {
 export async function actualizarUsuario(req, res) {
   try {
     const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: "ID usuario inválido" });
+    }
 
     const affected = await daoActualizarUsuario(id, req.body);
-    if (affected === 0) return res.status(404).json({ message: "Usuario no encontrado" });
+    if (affected === 0) return res.status(404).json({ error: "Usuario no encontrado" });
 
     const updated = await daoObtenerUsuarioPorId(id);
-    res.json(updated);
+
+    if (updated && updated.password_hash !== undefined) {
+      const { password_hash: _, ...safe } = updated;
+      return res.json(safe);
+    }
+
+    return res.json(updated);
   } catch (err) {
-    res.status(500).json({ message: "Error actualizando usuario", error: err.message });
+    if (err?.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ error: "Nick/email/colegiado ya existe" });
+    }
+
+    console.error(err);
+    return res.status(500).json({ error: "Error actualizando usuario" });
   }
 }
 
@@ -92,19 +138,29 @@ export async function actualizarUsuario(req, res) {
 export async function cambiarActivo(req, res) {
   try {
     const id = Number(req.params.id);
-    const { activo } = req.body;
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: "ID usuario inválido" });
+    }
 
+    const { activo } = req.body ?? {};
     if (activo !== 0 && activo !== 1) {
-      return res.status(400).json({ message: "activo debe ser 0 o 1" });
+      return res.status(400).json({ error: "activo debe ser 0 o 1" });
     }
 
     const affected = await daoCambiarActivoUsuario(id, activo);
-    if (affected === 0) return res.status(404).json({ message: "Usuario no encontrado" });
+    if (affected === 0) return res.status(404).json({ error: "Usuario no encontrado" });
 
     const updated = await daoObtenerUsuarioPorId(id);
-    res.json(updated);
+
+    if (updated && updated.password_hash !== undefined) {
+      const { password_hash: _, ...safe } = updated;
+      return res.json(safe);
+    }
+
+    return res.json(updated);
   } catch (err) {
-    res.status(500).json({ message: "Error cambiando activo", error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: "Error cambiando activo" });
   }
 }
 
@@ -112,42 +168,49 @@ export async function cambiarActivo(req, res) {
 export async function cambiarPassword(req, res) {
   try {
     const id = Number(req.params.id);
-    const { password } = req.body;
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: "ID usuario inválido" });
+    }
 
-    if (!password || password.length < 6) {
-      return res.status(400).json({ message: "password inválida (mínimo 6 caracteres)" });
+    const { password } = req.body ?? {};
+    if (!password || typeof password !== "string" || password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "password inválida (mínimo 6 caracteres)" });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
     const affected = await daoCambiarPassword(id, password_hash);
-    if (affected === 0) return res.status(404).json({ message: "Usuario no encontrado" });
+    if (affected === 0) return res.status(404).json({ error: "Usuario no encontrado" });
 
-    res.json({ message: "Password actualizada" });
+    return res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ message: "Error cambiando password", error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: "Error cambiando password" });
   }
 }
 
 /** POST /auth/login  (login = nick o email, password) */
 export async function login(req, res) {
   try {
-    const { login: loginValue, password } = req.body;
+    const { login: loginValue, password } = req.body ?? {};
 
     if (!loginValue || !password) {
-      return res.status(400).json({ message: "login y password son obligatorios" });
+      return res.status(400).json({ error: "login y password son obligatorios" });
     }
 
     const user = await daoObtenerUsuarioPorNickOEmail(loginValue);
-    if (!user) return res.status(401).json({ message: "Credenciales inválidas" });
-    if (user.activo !== 1) return res.status(403).json({ message: "Usuario inactivo" });
+    if (!user) return res.status(401).json({ error: "Credenciales inválidas" });
+    if (user.activo !== 1) return res.status(403).json({ error: "Usuario inactivo" });
 
     const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) return res.status(401).json({ message: "Credenciales inválidas" });
+    if (!ok) return res.status(401).json({ error: "Credenciales inválidas" });
 
-    // No devolvemos hash
     const { password_hash, ...safe } = user;
-    res.json(safe);
+    return res.json(safe);
   } catch (err) {
-    res.status(500).json({ message: "Error en login", error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: "Error en login" });
   }
 }
+
