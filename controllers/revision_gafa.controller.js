@@ -1,4 +1,3 @@
-
 import {
   daoListarRevisionesGafaPorCliente,
   daoObtenerRevisionGafaPorId,
@@ -22,7 +21,7 @@ export async function listarRevisionesGafaDeCliente(req, res) {
     return res.json(revisiones); // [] si no hay
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Error al listar revisiones de gafa" });
+    return res.status(500).json({ error: "Error listando revisiones de gafa" });
   }
 }
 
@@ -45,7 +44,7 @@ export async function obtenerRevisionGafa(req, res) {
     return res.json(revision);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Error al obtener la revisión" });
+    return res.status(500).json({ error: "Error obteniendo la revisión de gafa" });
   }
 }
 
@@ -77,9 +76,9 @@ export async function crearRevisionGafaParaCliente(req, res) {
       body.fecha_revision ?? new Date().toISOString().slice(0, 10);
 
     if (typeof fechaRevision !== "string" || fechaRevision.length !== 10) {
-      return res.status(400).json({
-        error: "fecha_revision inválida (formato YYYY-MM-DD)"
-      });
+      return res
+        .status(400)
+        .json({ error: "fecha_revision inválida (formato YYYY-MM-DD)" });
     }
 
     const data = {
@@ -92,12 +91,12 @@ export async function crearRevisionGafaParaCliente(req, res) {
     const idRevisionGafa = await daoCrearRevisionGafa(data);
 
     return res.status(201).json({
-      mensaje: "Revisión de gafa creada",
+      ok: true,
       id_revision_gafa: idRevisionGafa
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Error al crear la revisión de gafa" });
+    return res.status(500).json({ error: "Error creando la revisión de gafa" });
   }
 }
 
@@ -120,9 +119,9 @@ export async function actualizarRevisionGafa(req, res) {
         typeof body.fecha_revision !== "string" ||
         body.fecha_revision.length !== 10
       ) {
-        return res.status(400).json({
-          error: "fecha_revision inválida (formato YYYY-MM-DD)"
-        });
+        return res
+          .status(400)
+          .json({ error: "fecha_revision inválida (formato YYYY-MM-DD)" });
       }
     }
 
@@ -142,10 +141,10 @@ export async function actualizarRevisionGafa(req, res) {
       return res.status(404).json({ error: "Revisión no encontrada" });
     }
 
-    return res.json({ mensaje: "Revisión de gafa actualizada" });
+    return res.json({ ok: true });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Error al actualizar la revisión" });
+    return res.status(500).json({ error: "Error actualizando la revisión de gafa" });
   }
 }
 
@@ -165,9 +164,10 @@ export async function borrarRevisionGafa(req, res) {
       return res.status(404).json({ error: "Revisión no encontrada" });
     }
 
-    return res.json({ mensaje: "Revisión de gafa borrada" });
+    return res.json({ ok: true });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Error al borrar la revisión" });
+    return res.status(500).json({ error: "Error borrando la revisión de gafa" });
   }
 }
+
