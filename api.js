@@ -18,10 +18,10 @@ app.get("/health", (req, res) => {
 });
 
 
-
 app.get("/", (req, res) => {
-  res.send("OpticEasy API funcionando ✅");
+  res.send("OpticEasy API funcionando ✅ v2");
 });
+
 
 // RUTAS
 app.use("/clientes", clientesRoutes);
