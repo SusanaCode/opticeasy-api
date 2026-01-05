@@ -13,10 +13,10 @@ export async function listarFirmasDeCliente(req, res) {
     }
 
     const firmas = await daoListarFirmasPorCliente(idCliente);
-    res.json(firmas);
+    return res.json(firmas); // [] si no hay
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al listar firmas" });
+    return res.status(500).json({ error: "Error listando firmas" });
   }
 }
 
@@ -33,10 +33,10 @@ export async function obtenerFirma(req, res) {
       return res.status(404).json({ error: "Firma no encontrada" });
     }
 
-    res.json(firma);
+    return res.json(firma);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al obtener firma" });
+    return res.status(500).json({ error: "Error obteniendo firma" });
   }
 }
 
@@ -50,22 +50,23 @@ export async function crearFirmaParaCliente(req, res) {
 
     const { fecha_firma, imagen_firma } = req.body ?? {};
 
-    // fecha opcional (si no viene, ponemos hoy YYYY-MM-DD)
-    const fecha = fecha_firma ?? new Date().toISOString().slice(0, 10);
-
     if (!imagen_firma) {
       return res.status(400).json({ error: "imagen_firma es obligatoria" });
     }
 
+    // fecha opcional (si no viene, ponemos hoy YYYY-MM-DD)
+    const fecha = fecha_firma ?? new Date().toISOString().slice(0, 10);
+
+    // OJO: mando id_cliente (forma más habitual en DAO/SQL)
     const id_firma = await daoCrearFirma({
-      idCliente,
+      id_cliente: idCliente,
       fecha_firma: fecha,
       imagen_firma
     });
 
-    res.status(201).json({ mensaje: "Firma guardada", id_firma });
+    return res.status(201).json({ ok: true, id_firma });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al crear firma" });
+    return res.status(500).json({ error: "Error creando firma" });
   }
 }
