@@ -45,6 +45,9 @@ router.post("/:id/revisiones-gafa", crearRevisionGafaParaCliente);
 router.get("/:idCliente/revision-lc", listarRevisionesLcPorCliente);
 router.post("/:idCliente/revision-lc", crearRevisionLc);
 
+// Revisiones LC (nuevo, simétrico con gafa)
+router.get("/:id/revisiones-lc", listarRevisionesLcPorCliente);
+router.post("/:id/revisiones-lc", crearRevisionLc);
 export default router;
 
 

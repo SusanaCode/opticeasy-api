@@ -12,7 +12,7 @@ import {
  */
 export async function listarRevisionesLcPorCliente(req, res) {
   try {
-    const idCliente = Number(req.params.idCliente);
+    const idCliente = Number(req.params.idCliente ?? req.params.id);
     if (!Number.isInteger(idCliente) || idCliente <= 0) {
       return res.status(400).json({ message: "ID cliente inválido" });
     }
@@ -58,7 +58,7 @@ export async function obtenerRevisionLcPorId(req, res) {
  */
 export async function crearRevisionLc(req, res) {
   try {
-    const idCliente = Number(req.params.idCliente);
+    const idCliente = Number(req.params.idCliente ?? req.params.id);
     if (!Number.isInteger(idCliente) || idCliente <= 0) {
       return res.status(400).json({ message: "ID cliente inválido" });
     }
