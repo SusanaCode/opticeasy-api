@@ -4,59 +4,57 @@ import {
   daoObtenerClientePorId,
   daoCrearCliente,
   daoActualizarCliente,
-  daoCambiarActivo 
+  daoCambiarActivo
 } from "../dao/clientes.dao.js";
 
-// GET /clientes por campos
+// GET /clientes/buscar?nombre=&apellidos=&dni=&telefono=
 export async function buscarClientes(req, res) {
   try {
     const { nombre, apellidos, dni, telefono } = req.query;
 
     if (!nombre && !apellidos && !dni && !telefono) {
       return res.status(400).json({
-        error: "Debes enviar al menos un parámetro: nombre, apellidos, dni o telefono"
+        error:
+          "Debes enviar al menos un parámetro: nombre, apellidos, dni o telefono"
       });
     }
 
     const resultados = await daoBuscarClientes({ nombre, apellidos, dni, telefono });
-    res.json(resultados);
+    return res.json(resultados);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error en búsqueda de clientes" });
+    return res.status(500).json({ error: "Error buscando clientes" });
   }
 }
 
-// GET /clientes lista
+// GET /clientes
 export async function listarClientes(req, res) {
   try {
     const clientes = await daoListarClientes();
-    res.json(clientes);
+    return res.json(clientes);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al obtener clientes" });
+    return res.status(500).json({ error: "Error listando clientes" });
   }
 }
 
 // GET /clientes/:id
 export async function obtenerClientePorId(req, res) {
   try {
-    const { id } = req.params;
-
-    const idNum = Number(id);
+    const idNum = Number(req.params.id);
     if (!Number.isInteger(idNum) || idNum <= 0) {
-      return res.status(400).json({ error: "ID inválido" });
+      return res.status(400).json({ error: "ID cliente inválido" });
     }
 
     const cliente = await daoObtenerClientePorId(idNum);
-
     if (!cliente) {
       return res.status(404).json({ error: "Cliente no encontrado" });
     }
 
-    res.json(cliente);
+    return res.json(cliente);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al obtener el cliente" });
+    return res.status(500).json({ error: "Error obteniendo el cliente" });
   }
 }
 
@@ -78,7 +76,6 @@ export async function crearCliente(req, res) {
       activo
     } = req.body ?? {};
 
-    
     if (!nombre || !apellidos || !dni) {
       return res.status(400).json({
         error: "nombre, apellidos y dni son obligatorios"
@@ -96,37 +93,33 @@ export async function crearCliente(req, res) {
       provincia: provincia?.trim() ?? null,
       fecha_nacimiento: fecha_nacimiento ?? null,
       correo_electronico: correo_electronico?.trim() ?? null,
-
-     
       firma_rgpd: firma_rgpd ?? 0,
       activo: activo ?? 1
     };
 
     const id_cliente = await daoCrearCliente(data);
 
-    res.status(201).json({
-      mensaje: "Cliente creado correctamente",
+    return res.status(201).json({
+      ok: true,
       id_cliente
     });
-
   } catch (error) {
-  
+    // DNI duplicado
     if (error?.code === "ER_DUP_ENTRY") {
       return res.status(409).json({ error: "El DNI ya existe" });
     }
 
     console.error(error);
-    res.status(500).json({ error: "Error al crear cliente" });
+    return res.status(500).json({ error: "Error creando cliente" });
   }
 }
 
-//actualiza cliente
-
+// PUT /clientes/:id
 export async function actualizarCliente(req, res) {
   try {
     const idNum = Number(req.params.id);
     if (!Number.isInteger(idNum) || idNum <= 0) {
-      return res.status(400).json({ error: "ID inválido" });
+      return res.status(400).json({ error: "ID cliente inválido" });
     }
 
     const {
@@ -144,7 +137,7 @@ export async function actualizarCliente(req, res) {
       activo
     } = req.body ?? {};
 
-    //obligatorios reales según tu SQL
+    // obligatorios según tu SQL
     if (!nombre || !apellidos || !dni) {
       return res.status(400).json({
         error: "nombre, apellidos y dni son obligatorios"
@@ -172,24 +165,23 @@ export async function actualizarCliente(req, res) {
       return res.status(404).json({ error: "Cliente no encontrado" });
     }
 
-    return res.json({ ok: true, mensaje: "Cliente actualizado correctamente" });
-
+    return res.json({ ok: true });
   } catch (error) {
     if (error?.code === "ER_DUP_ENTRY") {
       return res.status(409).json({ error: "El DNI ya existe" });
     }
+
     console.error(error);
-    res.status(500).json({ error: "Error al actualizar cliente" });
+    return res.status(500).json({ error: "Error actualizando cliente" });
   }
 }
 
-// CAMBIA A ACTIVO
-
+// PATCH /clientes/:id/activo
 export async function cambiarActivo(req, res) {
   try {
     const idNum = Number(req.params.id);
     if (!Number.isInteger(idNum) || idNum <= 0) {
-      return res.status(400).json({ error: "ID inválido" });
+      return res.status(400).json({ error: "ID cliente inválido" });
     }
 
     const { activo } = req.body ?? {};
@@ -202,14 +194,9 @@ export async function cambiarActivo(req, res) {
       return res.status(404).json({ error: "Cliente no encontrado" });
     }
 
-    res.json({ ok: true, activo });
- } catch (error) {
-  res.status(500).json({
-    error: "Error cambiando activo",
-    detalle: error?.message,
-    code: error?.code,
-    sqlMessage: error?.sqlMessage
-  });
-}
-
+    return res.json({ ok: true, activo });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Error cambiando activo" });
+  }
 }
