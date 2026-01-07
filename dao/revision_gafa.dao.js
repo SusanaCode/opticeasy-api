@@ -12,7 +12,7 @@ export async function daoListarRevisionesGafaPorCliente(idCliente) {
     SELECT
       rg.id_revision_gafa,
       rg.id_cliente,
-      rg.fecha_revision,
+      DATE_FORMAT(rg.fecha_revision, '%Y-%m-%d') AS fecha_revision,
 
       -- OD (resultante)
       rg.esfera_od,

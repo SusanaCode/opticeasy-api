@@ -13,7 +13,7 @@ export async function daoListarRevisionesLcPorCliente(idCliente) {
     SELECT
       rl.id_revision_lc,
       rl.id_cliente,
-      rl.fecha_revision,
+      DATE_FORMAT(rl.fecha_revision, '%Y-%m-%d') AS fecha_revision,
 
       -- OD
       rl.esfera_od,
