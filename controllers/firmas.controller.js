@@ -1,7 +1,7 @@
 import {
   daoListarFirmasPorCliente,
   daoObtenerFirmaPorId,
-  daoCrearFirma
+  daoCrearFirmaYMarcarClienteFirmado
 } from "../dao/firmas.dao.js";
 
 // GET /clientes/:id/firmas
@@ -58,7 +58,7 @@ export async function crearFirmaParaCliente(req, res) {
     const fecha = fecha_firma ?? new Date().toISOString().slice(0, 10);
 
     // OJO: mando id_cliente (forma más habitual en DAO/SQL)
-    const id_firma = await daoCrearFirma({
+    const id_firma = await daoCrearFirmaYMarcarClienteFirmado({
       id_cliente: idCliente,
       fecha_firma: fecha,
       imagen_firma
