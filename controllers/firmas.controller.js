@@ -1,7 +1,7 @@
 import {
   daoListarFirmasPorCliente,
   daoObtenerFirmaPorId,
-  daoCrearFirmaYMarcarClienteFirmado
+  daoUpsertFirmaYMarcarClienteFirmado
 } from "../dao/firmas.dao.js";
 
 // GET /clientes/:id/firmas
@@ -49,24 +49,25 @@ export async function crearFirmaParaCliente(req, res) {
     }
 
     const { fecha_firma, imagen_firma } = req.body ?? {};
-
     if (!imagen_firma) {
       return res.status(400).json({ error: "imagen_firma es obligatoria" });
     }
 
-    // fecha opcional (si no viene, ponemos hoy YYYY-MM-DD)
     const fecha = fecha_firma ?? new Date().toISOString().slice(0, 10);
 
-    // OJO: mando id_cliente (forma más habitual en DAO/SQL)
-    const id_firma = await daoCrearFirmaYMarcarClienteFirmado({
+    await daoUpsertFirmaYMarcarClienteFirmado({
       id_cliente: idCliente,
       fecha_firma: fecha,
       imagen_firma
     });
 
-    return res.status(201).json({ ok: true, id_firma });
+    return res.status(201).json({ ok: true });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Error creando firma" });
+    return res.status(500).json({
+      error: "Error creando firma",
+      code: error?.code,
+      sqlMessage: error?.sqlMessage
+    });
   }
 }

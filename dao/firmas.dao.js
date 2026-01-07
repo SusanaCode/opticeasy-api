@@ -27,8 +27,8 @@ export async function daoObtenerFirmaPorId(idFirma) {
   return rows[0] ?? null;
 }
 
-// CREA FIRMA + MARCA CLIENTE COMO RGPD FIRMADO
-export async function daoCrearFirmaYMarcarClienteFirmado({
+// Crea o actualiza firma + marca cliente firmado (transacción)
+export async function daoUpsertFirmaYMarcarClienteFirmado({
   id_cliente,
   fecha_firma,
   imagen_firma
@@ -38,18 +38,19 @@ export async function daoCrearFirmaYMarcarClienteFirmado({
   try {
     await conn.beginTransaction();
 
-    // 1️⃣ Insertar firma
-    const [result] = await conn.query(
+    // 1) INSERT o UPDATE (si ya existe por id_cliente UNIQUE)
+    await conn.query(
       `
       INSERT INTO firma_rgpd (id_cliente, fecha_firma, imagen_firma)
       VALUES (?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        fecha_firma = VALUES(fecha_firma),
+        imagen_firma = VALUES(imagen_firma)
       `,
       [id_cliente, fecha_firma, imagen_firma]
     );
 
-    const id_firma = result.insertId;
-
-    // 2️⃣ Marcar cliente como RGPD firmado
+    // 2) Marcar cliente firmado
     await conn.query(
       `
       UPDATE clientes
@@ -60,7 +61,7 @@ export async function daoCrearFirmaYMarcarClienteFirmado({
     );
 
     await conn.commit();
-    return id_firma;
+    return true;
   } catch (error) {
     await conn.rollback();
     throw error;
