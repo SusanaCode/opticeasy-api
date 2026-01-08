@@ -49,9 +49,54 @@ export async function daoObtenerRevisionGafaPorId(idRevisionGafa) {
   const [rows] = await pool.query(
     `
     SELECT
-      rg.*,
+      rg.id_revision_gafa,
+      rg.id_cliente,
+      rg.id_optometrista,
+      DATE_FORMAT(rg.fecha_revision, '%Y-%m-%d') AS fecha_revision,
+
+      rg.anamnesis,
+      rg.otras_pruebas,
+
+      -- Usada OD
+      rg.esfera_usada_od,
+      rg.cilindro_usada_od,
+      rg.eje_usada_od,
+      rg.av_usada_od,
+
+      -- Resultante OD
+      rg.esfera_od,
+      rg.cilindro_od,
+      rg.eje_od,
+      rg.av_od,
+      rg.add_od,
+      rg.prisma_od,
+      rg.ccf_od,
+      rg.arn_od,
+      rg.arp_od,
+      rg.dominante_od,
+
+      -- Usada OI
+      rg.esfera_usada_oi,
+      rg.cilindro_usada_oi,
+      rg.eje_usada_oi,
+      rg.av_usada_oi,
+
+      -- Resultante OI
+      rg.esfera_oi,
+      rg.cilindro_oi,
+      rg.eje_oi,
+      rg.av_oi,
+      rg.add_oi,
+      rg.prisma_oi,
+      rg.ccf_oi,
+      rg.arn_oi,
+      rg.arp_oi,
+      rg.dominante_oi,
+
+      -- Optometrista (texto para mostrar)
       CONCAT(u.nombre_usuario, ' ', u.apellidos_usuario) AS optometrista,
       u.numero_colegiado AS optometrista_colegiado
+
     FROM revision_gafa rg
     LEFT JOIN usuarios u ON u.id_usuario = rg.id_optometrista
     WHERE rg.id_revision_gafa = ?
@@ -62,6 +107,7 @@ export async function daoObtenerRevisionGafaPorId(idRevisionGafa) {
 
   return rows[0] ?? null;
 }
+
 
 /**
  * CREAR revisión

@@ -27,7 +27,7 @@ export async function daoObtenerClientePorId(id) {
       cp,
       poblacion,
       provincia,
-      fecha_nacimiento,
+      DATE_FORMAT(fecha_nacimiento, '%Y-%m-%d') AS fecha_nacimiento,
       dni,
       correo_electronico,
       firma_rgpd,

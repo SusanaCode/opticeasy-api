@@ -56,9 +56,36 @@ export async function daoObtenerRevisionLcPorId(idRevisionLc) {
   const [rows] = await pool.query(
     `
     SELECT
-      rl.*,
+      rl.id_revision_lc,
+      rl.id_cliente,
+      rl.id_optometrista,
+      DATE_FORMAT(rl.fecha_revision, '%Y-%m-%d') AS fecha_revision,
+
+      rl.anamnesis,
+      rl.otras_pruebas,
+
+      -- OD
+      rl.esfera_od,
+      rl.cilindro_od,
+      rl.eje_od,
+      rl.av_od,
+      rl.add_od,
+      rl.dominante_od,
+      rl.tipo_lente_od,
+
+      -- OI
+      rl.esfera_oi,
+      rl.cilindro_oi,
+      rl.eje_oi,
+      rl.av_oi,
+      rl.add_oi,
+      rl.dominante_oi,
+      rl.tipo_lente_oi,
+
+      -- Optometrista (info “bonita” para mostrar)
       CONCAT(u.nombre_usuario, ' ', u.apellidos_usuario) AS optometrista,
       u.numero_colegiado AS optometrista_colegiado
+
     FROM revision_lc rl
     LEFT JOIN usuarios u ON u.id_usuario = rl.id_optometrista
     WHERE rl.id_revision_lc = ?
@@ -69,6 +96,7 @@ export async function daoObtenerRevisionLcPorId(idRevisionLc) {
 
   return rows[0] ?? null;
 }
+
 
 /**
  * CREAR revisión LC

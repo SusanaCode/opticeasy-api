@@ -4,7 +4,10 @@ import { pool } from "../config/db.js";
 export async function daoListarFirmasPorCliente(idCliente) {
   const [rows] = await pool.query(
     `
-    SELECT id_firma, id_cliente, fecha_firma
+    SELECT 
+    id_firma, 
+    id_cliente, 
+    DATE_FORMAT(fecha_firma, '%Y-%m-%d') AS fecha_firma
     FROM firma_rgpd
     WHERE id_cliente = ?
     ORDER BY fecha_firma DESC, id_firma DESC
@@ -18,9 +21,14 @@ export async function daoListarFirmasPorCliente(idCliente) {
 export async function daoObtenerFirmaPorId(idFirma) {
   const [rows] = await pool.query(
     `
-    SELECT id_firma, id_cliente, fecha_firma, imagen_firma
+    SELECT 
+    id_firma, 
+    id_cliente, 
+    DATE_FORMAT(fecha_firma, '%Y-%m-%d') AS fecha_firma,
+    imagen_firma
     FROM firma_rgpd
     WHERE id_firma = ?
+    LIMIT 1
     `,
     [idFirma]
   );
