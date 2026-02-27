@@ -134,6 +134,7 @@ export async function actualizarCliente(req, res) {
       dni,
       correo_electronico,
       firma_rgpd,
+      notas,
       activo
     } = req.body ?? {};
 
@@ -156,6 +157,7 @@ export async function actualizarCliente(req, res) {
       fecha_nacimiento: fecha_nacimiento ?? null,
       correo_electronico: correo_electronico?.trim() ?? null,
       firma_rgpd: firma_rgpd ?? 0,
+      notas: notas?.trim() ?? null,
       activo: activo ?? 1
     };
 
