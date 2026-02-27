@@ -1,5 +1,3 @@
-
-
 import { pool } from "../config/db.js";
 
 // ✅ LISTADO general (si lo usas)
@@ -31,7 +29,8 @@ export async function daoObtenerClientePorId(id) {
       dni,
       correo_electronico,
       firma_rgpd,
-      activo
+      activo,
+      notas
     FROM clientes
     WHERE id_cliente = ?
     `,
@@ -62,12 +61,12 @@ export async function daoBuscarClientes({ nombre, apellidos, dni, telefono }) {
   }
 
   if (dni) {
-    sql += " AND dni LIKE ?";         
+    sql += " AND dni LIKE ?";
     params.push(`%${dni}%`);
   }
 
   if (telefono) {
-    sql += " AND telefono LIKE ?";   
+    sql += " AND telefono LIKE ?";
     params.push(`%${telefono}%`);
   }
 
@@ -90,14 +89,15 @@ export async function daoCrearCliente({
   dni,
   correo_electronico,
   firma_rgpd,
-  activo
+  activo,
+  notas // ✅ opcional (si no lo envías, queda null)
 }) {
   const [result] = await pool.query(
     `
     INSERT INTO clientes
     (nombre, apellidos, telefono, direccion, cp, poblacion, provincia, fecha_nacimiento,
-     dni, correo_electronico, firma_rgpd, activo)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     dni, correo_electronico, firma_rgpd, activo, notas)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       nombre,
@@ -111,12 +111,12 @@ export async function daoCrearCliente({
       dni,
       correo_electronico ?? null,
       firma_rgpd ?? 0,
-      activo ?? 1
+      activo ?? 1,
+      notas ?? null
     ]
   );
   return result.insertId;
 }
-
 
 
 export async function daoActualizarCliente(id, data) {
@@ -132,7 +132,8 @@ export async function daoActualizarCliente(id, data) {
     dni,
     correo_electronico,
     firma_rgpd,
-    activo
+    activo,
+    notas // ✅ NUEVO
   } = data;
 
   const [result] = await pool.query(
@@ -149,7 +150,8 @@ export async function daoActualizarCliente(id, data) {
         dni = ?,
         correo_electronico = ?,
         firma_rgpd = ?,
-        activo = ?
+        activo = ?,
+        notas = ?
     WHERE id_cliente = ?
     `,
     [
@@ -165,6 +167,7 @@ export async function daoActualizarCliente(id, data) {
       correo_electronico ?? null,
       firma_rgpd ?? 0,
       activo ?? 1,
+      notas ?? null,
       id
     ]
   );
