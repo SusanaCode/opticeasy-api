@@ -18,12 +18,14 @@ export async function daoListarRevisionesGafaPorCliente(idCliente) {
       rg.esfera_od,
       rg.cilindro_od,
       rg.eje_od,
+      rg.av_od,
       rg.add_od,
 
       -- OI (resultante)
       rg.esfera_oi,
       rg.cilindro_oi,
       rg.eje_oi,
+      rg.av_oi,
       rg.add_oi,
 
       -- Optometrista
