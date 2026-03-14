@@ -33,7 +33,7 @@ app.get("/", (req, res) => {
 
 
 // RUTAS
-app.use("/clientes", clientesRoutes);
+app.use("/clientes", verifyToken, clientesRoutes);
 app.use("/firmas", firmasRoutes);
 app.use("/",revisionLcRoutes);
 app.use("/usuarios", verifyToken, usuariosRoutes);
