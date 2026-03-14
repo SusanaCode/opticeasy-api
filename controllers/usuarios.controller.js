@@ -8,7 +8,8 @@ import {
   daoCrearUsuario,
   daoActualizarUsuario,
   daoCambiarPassword,
-  daoCambiarActivoUsuario
+  daoCambiarActivoUsuario,
+  daoEsAdminUsuarios
 } from "../dao/usuarios.dao.js";
 
 // Roles permitidos (lo que mandará tu desplegable Android)
@@ -72,6 +73,17 @@ export async function obtenerUsuarioPorId(req, res) {
 /** POST /usuarios  (recibe password en claro) */
 export async function crearUsuario(req, res) {
   try {
+    const idUsuarioLogueado = req.user?.id;
+
+    if (!idUsuarioLogueado) {
+      return res.status(401).json({ error: "No autorizado" });
+    }
+
+    const esAdminUsuarios = await daoEsAdminUsuarios(idUsuarioLogueado);
+    if (!esAdminUsuarios) {
+      return res.status(403).json({ error: "No tienes permisos para crear usuarios" });
+    }
+
     const {
       nombre_usuario,
       apellidos_usuario,

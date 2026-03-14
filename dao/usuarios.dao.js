@@ -171,3 +171,19 @@ export async function daoCambiarActivoUsuario(idUsuario, activo) {
   );
   return result.affectedRows;
 }
+
+
+export async function daoEsAdminUsuarios(idUsuario) {
+  const [rows] = await pool.query(
+    `
+    SELECT admin_usuarios
+    FROM usuarios
+    WHERE id_usuario = ?
+    LIMIT 1
+    `,
+    [idUsuario]
+  );
+
+  if (!rows[0]) return false;
+  return rows[0].admin_usuarios === 1;
+}
