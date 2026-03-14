@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
 app.use("/clientes", clientesRoutes);
 app.use("/firmas", firmasRoutes);
 app.use("/",revisionLcRoutes);
-app.use("/usuarios", usuariosRoutes);
+app.use("/usuarios", verifyToken, usuariosRoutes);
 app.use("/auth", authRoutes);
 
 // ARRANQUE
