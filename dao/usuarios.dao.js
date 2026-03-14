@@ -44,7 +44,7 @@ export async function daoObtenerUsuarioPorId(idUsuario) {
   return rows[0] ?? null;
 }
 
-/** OBTENER POR LOGIN (nick o email) - incluye password_hash */
+//** OBTENER POR LOGIN (nick o email) - incluye password_hash */
 export async function daoObtenerUsuarioPorNickOEmail(login) {
   const [rows] = await pool.query(
     `
@@ -58,7 +58,8 @@ export async function daoObtenerUsuarioPorNickOEmail(login) {
       password_hash,
       codigo_centro,
       rol,
-      activo
+      activo,
+      admin_usuarios
     FROM usuarios
     WHERE nick_usuario = ? OR email = ?
     LIMIT 1
@@ -67,7 +68,6 @@ export async function daoObtenerUsuarioPorNickOEmail(login) {
   );
   return rows[0] ?? null;
 }
-
 /** CREAR */
 export async function daoCrearUsuario(data) {
   const {
