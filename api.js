@@ -4,6 +4,7 @@ import "dotenv/config";
 import clientesRoutes from "./routes/clientes.routes.js";
 import firmasRoutes from "./routes/firmas.routes.js";
 import revisionLcRoutes from "./routes/revision_lc.routes.js";
+import revisionGafaRoutes from "./routes/revision_gafa.routes.js";
 
 import usuariosRoutes from "./routes/usuarios.routes.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -26,16 +27,15 @@ app.get("/auth/me", verifyToken, (req, res) => {
   });
 });
 
-
 app.get("/", (req, res) => {
   res.send("OpticEasy API funcionando ✅ v2");
 });
-
 
 // RUTAS
 app.use("/clientes", verifyToken, clientesRoutes);
 app.use("/firmas", verifyToken, firmasRoutes);
 app.use("/revision-lc", verifyToken, revisionLcRoutes);
+app.use("/revisiones-gafa", verifyToken, revisionGafaRoutes);
 app.use("/usuarios", verifyToken, usuariosRoutes);
 app.use("/auth", authRoutes);
 
@@ -43,7 +43,6 @@ app.use("/auth", authRoutes);
 app.listen(PORT, () => {
   console.log(`Servidor arrancado en http://localhost:${PORT}`);
 });
-
 
 
 
