@@ -9,10 +9,9 @@ import {
 
 const router = Router();
 
-
 // Por revisión
-router.get("/revision-lc/:id", obtenerRevisionLcPorId);
-router.put("/revision-lc/:id", actualizarRevisionLc);  
-router.delete("/revision-lc/:id", borrarRevisionLc);
+router.get("/:id", obtenerRevisionLcPorId);
+router.put("/:id", actualizarRevisionLc);
+router.delete("/:id", borrarRevisionLc);
 
 export default router;
