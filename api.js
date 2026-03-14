@@ -8,6 +8,8 @@ import revisionLcRoutes from "./routes/revision_lc.routes.js";
 import usuariosRoutes from "./routes/usuarios.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 
+import { verifyToken } from "./middleware/auth.js";
+
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 
@@ -15,6 +17,13 @@ app.use(express.json());
 
 app.get("/health", (req, res) => {
   res.json({ ok: true });
+});
+
+app.get("/auth/me", verifyToken, (req, res) => {
+  res.json({
+    ok: true,
+    user: req.user
+  });
 });
 
 
