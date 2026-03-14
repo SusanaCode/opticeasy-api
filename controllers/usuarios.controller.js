@@ -1,5 +1,6 @@
 // controllers/usuarios.controller.js
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import {
   daoListarUsuarios,
   daoObtenerUsuarioPorId,
@@ -327,7 +328,21 @@ export async function login(req, res) {
     if (!ok) return res.status(401).json({ error: "Credenciales inválidas" });
 
     const { password_hash, ...safe } = user;
-    return res.json(safe);
+
+    const token = jwt.sign(
+      {
+        id: safe.id_usuario,
+        rol: safe.rol,
+        centro: safe.codigo_centro
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "8h" }
+    );
+
+    return res.json({
+      token,
+      user: safe
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Error en login" });
