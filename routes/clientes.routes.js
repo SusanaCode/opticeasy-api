@@ -23,7 +23,15 @@ import {
   crearRevisionLc
 } from "../controllers/revision_lc.controller.js";
 
+
 const router = Router();
+
+function soloOptico(req, res, next) {
+  if (req.user?.rol !== "optico") {
+    return res.status(403).json({ error: "No tienes permisos para crear revisiones" });
+  }
+  next();
+}
 
 // Clientes
 router.get("/buscar", buscarClientes);
@@ -39,15 +47,15 @@ router.post("/:id/firmas", crearFirmaParaCliente);
 
 // Revisiones de gafa
 router.get("/:id/revisiones-gafa", listarRevisionesGafaDeCliente);
-router.post("/:id/revisiones-gafa", crearRevisionGafaParaCliente);
+router.post("/:id/revisiones-gafa", soloOptico, crearRevisionGafaParaCliente);
 
 // Revisiones LC
 router.get("/:idCliente/revision-lc", listarRevisionesLcPorCliente);
-router.post("/:idCliente/revision-lc", crearRevisionLc);
+router.post("/:idCliente/revision-lc", soloOptico, crearRevisionLc);
 
 // Revisiones LC (nuevo, simétrico con gafa)
 router.get("/:id/revisiones-lc", listarRevisionesLcPorCliente);
-router.post("/:id/revisiones-lc", crearRevisionLc);
+router.post("/:id/revisiones-lc", soloOptico, crearRevisionLc);
 export default router;
 
 
