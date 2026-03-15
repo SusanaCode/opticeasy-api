@@ -12,11 +12,10 @@ import {
   daoEsAdminUsuarios
 } from "../dao/usuarios.dao.js";
 
-// Roles permitidos (lo que mandará tu desplegable Android)
+// Roles permitidos
 const ROLES_VALIDOS = new Set(["optico", "comercial"]);
 
 function isValidEmail(email) {
-  // Validación básica (suficiente para backend de proyecto)
   return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
@@ -27,23 +26,41 @@ function normalizeRol(rol) {
 }
 
 function parseDupField(err) {
-  // MySQL suele devolver algo como: "Duplicate entry ... for key 'usuarios.email'"
   const msg = (err?.sqlMessage || err?.message || "").toLowerCase();
 
   if (msg.includes("nick_usuario")) return "nick";
   if (msg.includes("email")) return "email";
   if (msg.includes("numero_colegiado")) return "numero_colegiado";
 
-  // A veces el key viene sin nombre de columna, pero con el índice
   if (msg.includes("nick")) return "nick";
   if (msg.includes("coleg")) return "numero_colegiado";
 
   return null;
 }
 
+async function checkAdminUsuarios(req, res) {
+  const idUsuarioLogueado = req.user?.id;
+
+  if (!idUsuarioLogueado) {
+    res.status(401).json({ error: "No autorizado" });
+    return false;
+  }
+
+  const esAdminUsuarios = await daoEsAdminUsuarios(idUsuarioLogueado);
+  if (!esAdminUsuarios) {
+    res.status(403).json({ error: "No tienes permisos para gestionar usuarios" });
+    return false;
+  }
+
+  return true;
+}
+
 /** GET /usuarios */
 export async function listarUsuarios(req, res) {
   try {
+    const okAdmin = await checkAdminUsuarios(req, res);
+    if (!okAdmin) return;
+
     const rows = await daoListarUsuarios();
     return res.json(rows);
   } catch (err) {
@@ -55,6 +72,9 @@ export async function listarUsuarios(req, res) {
 /** GET /usuarios/:id */
 export async function obtenerUsuarioPorId(req, res) {
   try {
+    const okAdmin = await checkAdminUsuarios(req, res);
+    if (!okAdmin) return;
+
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: "ID inválido" });
@@ -70,19 +90,11 @@ export async function obtenerUsuarioPorId(req, res) {
   }
 }
 
-/** POST /usuarios  (recibe password en claro) */
+/** POST /usuarios */
 export async function crearUsuario(req, res) {
   try {
-    const idUsuarioLogueado = req.user?.id;
-
-    if (!idUsuarioLogueado) {
-      return res.status(401).json({ error: "No autorizado" });
-    }
-
-    const esAdminUsuarios = await daoEsAdminUsuarios(idUsuarioLogueado);
-    if (!esAdminUsuarios) {
-      return res.status(403).json({ error: "No tienes permisos para crear usuarios" });
-    }
+    const okAdmin = await checkAdminUsuarios(req, res);
+    if (!okAdmin) return;
 
     const {
       nombre_usuario,
@@ -96,7 +108,6 @@ export async function crearUsuario(req, res) {
       activo = 1
     } = req.body ?? {};
 
-    // Obligatorios
     if (
       !nombre_usuario ||
       !apellidos_usuario ||
@@ -109,7 +120,6 @@ export async function crearUsuario(req, res) {
       return res.status(400).json({ error: "Faltan campos obligatorios" });
     }
 
-    // Normalizar / validar
     const emailNorm = String(email).trim();
     if (!isValidEmail(emailNorm)) {
       return res.status(400).json({ error: "Email inválido" });
@@ -135,12 +145,10 @@ export async function crearUsuario(req, res) {
       return res.status(400).json({ error: "Password inválida (mínimo 6 caracteres)" });
     }
 
-    // Regla de tu UI: colegiado solo si rol=optico
     let colegiadoFinal = numero_colegiado;
     if (rolNorm === "comercial") {
       colegiadoFinal = null;
     } else {
-      // optico: si viene, validamos que sea número (si quieres hacerlo obligatorio, aquí lo fuerzas)
       if (colegiadoFinal !== null && colegiadoFinal !== undefined && colegiadoFinal !== "") {
         const n = Number(colegiadoFinal);
         if (!Number.isInteger(n) || n <= 0) {
@@ -148,10 +156,6 @@ export async function crearUsuario(req, res) {
         }
         colegiadoFinal = n;
       }
-      // Si quieres que optico SIEMPRE tenga colegiado, descomenta:
-      // if (colegiadoFinal === null || colegiadoFinal === undefined || colegiadoFinal === "") {
-      //   return res.status(400).json({ error: "numero_colegiado es obligatorio para óptico" });
-      // }
     }
 
     const password_hash = await bcrypt.hash(passNorm, 10);
@@ -171,13 +175,13 @@ export async function crearUsuario(req, res) {
     const created = await daoObtenerUsuarioPorId(insertId);
     return res.status(201).json(created);
   } catch (err) {
-    // Duplicados
     if (err?.code === "ER_DUP_ENTRY") {
       const campo = parseDupField(err);
       if (campo === "email") return res.status(409).json({ error: "El email ya existe" });
       if (campo === "nick") return res.status(409).json({ error: "El nick ya existe" });
-      if (campo === "numero_colegiado")
+      if (campo === "numero_colegiado") {
         return res.status(409).json({ error: "El número de colegiado ya existe" });
+      }
 
       return res.status(409).json({ error: "Dato duplicado" });
     }
@@ -187,9 +191,12 @@ export async function crearUsuario(req, res) {
   }
 }
 
-/** PUT /usuarios/:id  (sin password) */
+/** PUT /usuarios/:id */
 export async function actualizarUsuario(req, res) {
   try {
+    const okAdmin = await checkAdminUsuarios(req, res);
+    if (!okAdmin) return;
+
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: "ID inválido" });
@@ -197,7 +204,6 @@ export async function actualizarUsuario(req, res) {
 
     const body = req.body ?? {};
 
-    // Si actualizas, mejor exigir que vengan los campos principales (según tu DAO)
     const {
       nombre_usuario,
       apellidos_usuario,
@@ -264,8 +270,9 @@ export async function actualizarUsuario(req, res) {
       const campo = parseDupField(err);
       if (campo === "email") return res.status(409).json({ error: "El email ya existe" });
       if (campo === "nick") return res.status(409).json({ error: "El nick ya existe" });
-      if (campo === "numero_colegiado")
+      if (campo === "numero_colegiado") {
         return res.status(409).json({ error: "El número de colegiado ya existe" });
+      }
 
       return res.status(409).json({ error: "Dato duplicado" });
     }
@@ -278,6 +285,9 @@ export async function actualizarUsuario(req, res) {
 /** PATCH /usuarios/:id/activo */
 export async function cambiarActivo(req, res) {
   try {
+    const okAdmin = await checkAdminUsuarios(req, res);
+    if (!okAdmin) return;
+
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: "ID inválido" });
@@ -302,6 +312,9 @@ export async function cambiarActivo(req, res) {
 /** PATCH /usuarios/:id/password */
 export async function cambiarPassword(req, res) {
   try {
+    const okAdmin = await checkAdminUsuarios(req, res);
+    if (!okAdmin) return;
+
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
       return res.status(400).json({ error: "ID inválido" });
@@ -323,7 +336,7 @@ export async function cambiarPassword(req, res) {
   }
 }
 
-/** POST /auth/login  (login = nick o email, password) */
+/** POST /auth/login */
 export async function login(req, res) {
   try {
     const { login: loginValue, password } = req.body ?? {};
