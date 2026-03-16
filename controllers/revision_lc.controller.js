@@ -5,9 +5,10 @@ import {
   daoActualizarRevisionLc,
   daoBorrarRevisionLc
 } from "../dao/revision_lc.dao.js";
+import { esFechaIsoValida } from "../utils/date.js";
 
 /**
- * GET /clientes/:idCliente/revision-lc  (y también /clientes/:id/revisiones-lc)
+ * GET /clientes/:id/revisiones-lc
  * Listar revisiones LC de un cliente
  */
 export async function listarRevisionesLcPorCliente(req, res) {
@@ -49,7 +50,7 @@ export async function obtenerRevisionLcPorId(req, res) {
 }
 
 /**
- * POST /clientes/:idCliente/revision-lc (y también /clientes/:id/revisiones-lc)
+ * POST /clientes/:id/revisiones-lc
  * Crear revisión LC para un cliente
  */
 export async function crearRevisionLc(req, res) {
@@ -68,11 +69,7 @@ export async function crearRevisionLc(req, res) {
     }
     payload.id_optometrista = idOpt;
 
-    // Validar fecha_revision
-    if (
-      typeof payload.fecha_revision !== "string" ||
-      payload.fecha_revision.length !== 10
-    ) {
+    if (!esFechaIsoValida(payload.fecha_revision)) {
       return res
         .status(400)
         .json({ error: "fecha_revision inválida (formato YYYY-MM-DD)" });
@@ -101,12 +98,8 @@ export async function actualizarRevisionLc(req, res) {
 
     const body = { ...(req.body ?? {}) };
 
-    // Validar fecha_revision si viene
     if (body.fecha_revision !== undefined) {
-      if (
-        typeof body.fecha_revision !== "string" ||
-        body.fecha_revision.length !== 10
-      ) {
+      if (!esFechaIsoValida(body.fecha_revision)) {
         return res
           .status(400)
           .json({ error: "fecha_revision inválida (formato YYYY-MM-DD)" });

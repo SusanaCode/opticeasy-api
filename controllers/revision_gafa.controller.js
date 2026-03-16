@@ -5,6 +5,7 @@ import {
   daoActualizarRevisionGafa,
   daoBorrarRevisionGafa
 } from "../dao/revision_gafa.dao.js";
+import { esFechaIsoValida } from "../utils/date.js";
 
 /**
  * GET /clientes/:id/revisiones-gafa
@@ -75,7 +76,7 @@ export async function crearRevisionGafaParaCliente(req, res) {
     const fechaRevision =
       body.fecha_revision ?? new Date().toISOString().slice(0, 10);
 
-    if (typeof fechaRevision !== "string" || fechaRevision.length !== 10) {
+    if (!esFechaIsoValida(fechaRevision)) {
       return res
         .status(400)
         .json({ error: "fecha_revision inválida (formato YYYY-MM-DD)" });
@@ -113,12 +114,8 @@ export async function actualizarRevisionGafa(req, res) {
 
     const body = { ...(req.body ?? {}) };
 
-    // Validaciones suaves (solo si vienen)
     if (body.fecha_revision !== undefined) {
-      if (
-        typeof body.fecha_revision !== "string" ||
-        body.fecha_revision.length !== 10
-      ) {
+      if (!esFechaIsoValida(body.fecha_revision)) {
         return res
           .status(400)
           .json({ error: "fecha_revision inválida (formato YYYY-MM-DD)" });

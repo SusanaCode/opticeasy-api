@@ -3,6 +3,7 @@ import {
   daoObtenerFirmaPorId,
   daoUpsertFirmaYMarcarClienteFirmado
 } from "../dao/firmas.dao.js";
+import { esFechaIsoValida } from "../utils/date.js";
 
 const MAX_FIRMA_BYTES = 500 * 1024; // 500 KB
 const FIRMA_DATA_URL_REGEX = /^data:image\/(png|jpeg|jpg);base64,([A-Za-z0-9+/=]+)$/;
@@ -89,7 +90,7 @@ export async function crearFirmaParaCliente(req, res) {
 
     const fecha = fecha_firma ?? new Date().toISOString().slice(0, 10);
 
-    if (typeof fecha !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    if (!esFechaIsoValida(fecha)) {
       return res.status(400).json({
         error: "fecha_firma inválida (formato YYYY-MM-DD)"
       });
