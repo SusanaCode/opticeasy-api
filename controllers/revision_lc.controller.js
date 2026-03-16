@@ -61,10 +61,10 @@ export async function crearRevisionLc(req, res) {
 
     const payload = { ...req.body, id_cliente: idCliente };
 
-    // Validar id_optometrista
-    const idOpt = Number(payload.id_optometrista);
+    // 🔐 id_optometrista sale del token
+    const idOpt = Number(req.user?.id);
     if (!Number.isInteger(idOpt) || idOpt <= 0) {
-      return res.status(400).json({ error: "id_optometrista inválido" });
+      return res.status(401).json({ error: "Usuario no autenticado" });
     }
     payload.id_optometrista = idOpt;
 
@@ -99,7 +99,7 @@ export async function actualizarRevisionLc(req, res) {
       return res.status(400).json({ error: "ID revisión inválido" });
     }
 
-    const body = req.body ?? {};
+    const body = { ...(req.body ?? {}) };
 
     // Validar fecha_revision si viene
     if (body.fecha_revision !== undefined) {
@@ -113,13 +113,9 @@ export async function actualizarRevisionLc(req, res) {
       }
     }
 
-    // Validar id_optometrista si viene
-    if (body.id_optometrista !== undefined) {
-      const idOpt = Number(body.id_optometrista);
-      if (!Number.isInteger(idOpt) || idOpt <= 0) {
-        return res.status(400).json({ error: "id_optometrista inválido" });
-      }
-      body.id_optometrista = idOpt;
+    // 🔐 No permitir cambiar id_optometrista desde cliente
+    if ("id_optometrista" in body) {
+      delete body.id_optometrista;
     }
 
     const affected = await daoActualizarRevisionLc(id, body);
@@ -157,4 +153,3 @@ export async function borrarRevisionLc(req, res) {
     return res.status(500).json({ error: "Error borrando revisión LC" });
   }
 }
-

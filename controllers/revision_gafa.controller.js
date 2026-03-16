@@ -18,7 +18,7 @@ export async function listarRevisionesGafaDeCliente(req, res) {
     }
 
     const revisiones = await daoListarRevisionesGafaPorCliente(idCliente);
-    return res.json(revisiones); // [] si no hay
+    return res.json(revisiones);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Error listando revisiones de gafa" });
@@ -53,8 +53,8 @@ export async function obtenerRevisionGafa(req, res) {
  * Crear revisión para un cliente
  *
  * IMPORTANTE:
- * - id_optometrista NO lo escribe el usuario
- * - lo manda la app automáticamente (usuario identificado)
+ * - id_optometrista sale del usuario autenticado (JWT)
+ * - NO se acepta desde el body
  */
 export async function crearRevisionGafaParaCliente(req, res) {
   try {
@@ -65,10 +65,10 @@ export async function crearRevisionGafaParaCliente(req, res) {
 
     const body = req.body ?? {};
 
-    // 🔐 id_optometrista viene de la app (no del formulario)
-    const idOptometrista = Number(body.id_optometrista);
+    // 🔐 id_optometrista sale del token
+    const idOptometrista = Number(req.user?.id);
     if (!Number.isInteger(idOptometrista) || idOptometrista <= 0) {
-      return res.status(400).json({ error: "Optometrista no identificado" });
+      return res.status(401).json({ error: "Usuario no autenticado" });
     }
 
     // fecha_revision es DATE (YYYY-MM-DD)
@@ -111,7 +111,7 @@ export async function actualizarRevisionGafa(req, res) {
       return res.status(400).json({ error: "ID revisión inválido" });
     }
 
-    const body = req.body ?? {};
+    const body = { ...(req.body ?? {}) };
 
     // Validaciones suaves (solo si vienen)
     if (body.fecha_revision !== undefined) {
@@ -125,14 +125,9 @@ export async function actualizarRevisionGafa(req, res) {
       }
     }
 
-    // id_optometrista NO se cambia desde aquí normalmente,
-    // pero si viene (por diseño actual), lo validamos
-    if (body.id_optometrista !== undefined) {
-      const idOpt = Number(body.id_optometrista);
-      if (!Number.isInteger(idOpt) || idOpt <= 0) {
-        return res.status(400).json({ error: "id_optometrista inválido" });
-      }
-      body.id_optometrista = idOpt;
+    // 🔐 No permitir cambiar id_optometrista desde cliente
+    if ("id_optometrista" in body) {
+      delete body.id_optometrista;
     }
 
     const affected = await daoActualizarRevisionGafa(idRevision, body);
