@@ -10,10 +10,12 @@ import usuariosRoutes from "./routes/usuarios.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 
 import { verifyToken } from "./middleware/auth.js";
+import helmet from "helmet";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 
+app.use(helmet());
 app.use(express.json());
 
 app.get("/health", (req, res) => {
@@ -30,6 +32,8 @@ app.get("/auth/me", verifyToken, (req, res) => {
 app.get("/", (req, res) => {
   res.send("OpticEasy API funcionando ✅ v2");
 });
+
+
 
 // RUTAS
 app.use("/clientes", verifyToken, clientesRoutes);
