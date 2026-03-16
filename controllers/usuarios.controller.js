@@ -12,6 +12,9 @@ import {
   daoEsAdminUsuarios
 } from "../dao/usuarios.dao.js";
 
+// Contraseña valida
+const PASS_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
 // Roles permitidos
 const ROLES_VALIDOS = new Set(["optico", "comercial"]);
 
@@ -140,9 +143,11 @@ export async function crearUsuario(req, res) {
       return res.status(400).json({ error: "codigo_centro inválido (máx 10)" });
     }
 
-    const passNorm = String(password);
-    if (passNorm.length < 6) {
-      return res.status(400).json({ error: "Password inválida (mínimo 6 caracteres)" });
+    const passNorm = String(password).trim();
+    if (!PASS_REGEX.test(passNorm)) {
+    return res.status(400).json({
+    error: "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número"
+    });
     }
 
     let colegiadoFinal = numero_colegiado;
@@ -321,11 +326,15 @@ export async function cambiarPassword(req, res) {
     }
 
     const { password } = req.body ?? {};
-    if (!password || String(password).length < 6) {
-      return res.status(400).json({ error: "Password inválida (mínimo 6 caracteres)" });
+    const passNorm = String(password ?? "").trim();
+
+    if (!PASS_REGEX.test(passNorm)) {
+    return res.status(400).json({
+    error: "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número"
+    });
     }
 
-    const password_hash = await bcrypt.hash(String(password), 10);
+    const password_hash = await bcrypt.hash(passNorm, 10);
     const affected = await daoCambiarPassword(id, password_hash);
     if (affected === 0) return res.status(404).json({ error: "Usuario no encontrado" });
 
