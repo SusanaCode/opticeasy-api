@@ -11,11 +11,19 @@ import authRoutes from "./routes/auth.routes.js";
 
 import { verifyToken } from "./middleware/auth.js";
 import helmet from "helmet";
+import cors from "cors";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 
 app.use(helmet());
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 
 app.get("/health", (req, res) => {
