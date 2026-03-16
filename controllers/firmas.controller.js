@@ -15,7 +15,7 @@ export async function listarFirmasDeCliente(req, res) {
     const firmas = await daoListarFirmasPorCliente(idCliente);
     return res.json(firmas); // [] si no hay
   } catch (error) {
-    console.error(error);
+    console.error("[firmas] Error listando firmas:", error);
     return res.status(500).json({ error: "Error listando firmas" });
   }
 }
@@ -35,7 +35,7 @@ export async function obtenerFirma(req, res) {
 
     return res.json(firma);
   } catch (error) {
-    console.error(error);
+    console.error("[firmas] Error obteniendo firma:", error);
     return res.status(500).json({ error: "Error obteniendo firma" });
   }
 }
@@ -63,11 +63,7 @@ export async function crearFirmaParaCliente(req, res) {
 
     return res.status(201).json({ ok: true });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      error: "Error creando firma",
-      code: error?.code,
-      sqlMessage: error?.sqlMessage
-    });
+    console.error("[firmas] Error creando firma:", error);
+    return res.status(500).json({ error: "Error creando firma" });
   }
 }
