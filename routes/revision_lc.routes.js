@@ -1,8 +1,6 @@
 import { Router } from "express";
 import {
-  listarRevisionesLcPorCliente,
   obtenerRevisionLcPorId,
-  crearRevisionLc,
   actualizarRevisionLc,
   borrarRevisionLc
 } from "../controllers/revision_lc.controller.js";
